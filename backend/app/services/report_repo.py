@@ -42,7 +42,6 @@ class InMemoryReportRepository(BaseReportRepository):
         record = {
             **report_data,
             "id": report_id,
-            "serverId": report_id,  # Set serverId for client-sync compatibility
             "status": report_data.get("status") or "pending",
             "severity": report_data.get("severity") or "unknown",
             "timestamp": report_data.get("timestamp") or now,

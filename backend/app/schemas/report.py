@@ -22,6 +22,14 @@ class ReportCategory(str, Enum):
     TRACTION_OHE = "TRACTION_OHE"
     OTHER = "OTHER"
 
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            for member in cls:
+                if member.value.lower() == value.lower():
+                    return member
+        return super()._missing_(value)
+
 class ReportBase(BaseModel):
     category: ReportCategory = Field(ReportCategory.OTHER, description="Category of the railway issue")
     photo_url: Optional[str] = Field(None, description="URL or reference key to the stored photo")
@@ -29,10 +37,9 @@ class ReportBase(BaseModel):
     longitude: float = Field(..., ge=-180.0, le=180.0, description="GPS longitude coordinates (-180 to 180)")
     description: str = Field(..., min_length=1, description="Detailed description of the report/issue")
     timestamp: Optional[datetime] = Field(None, description="Timestamp of when the issue was reported/observed")
-    reporter_id: Optional[str] = Field(None, description="Unique identifier of the reporting worker")
 
 class ReportCreate(ReportBase):
-    pass
+    reporter_id: Optional[str] = Field(None, description="Unique identifier of the reporting worker (temporary until Auth is added)")
 
 class ReportUpdate(BaseModel):
     status: Optional[ReportStatus] = Field(None, description="Update status of the report")
@@ -45,7 +52,7 @@ class ReportUpdate(BaseModel):
 
 class ReportResponse(ReportBase):
     id: str = Field(..., description="Unique UUID identifier for the report")
-    serverId: str = Field(..., description="Alias of id for mobile app client sync compatibility")
+    reporter_id: Optional[str] = Field(None, description="Unique identifier of the reporting worker")
     status: ReportStatus = Field(..., description="Current status of the report")
     severity: ReportSeverity = Field(..., description="Assessed severity level")
     created_at: datetime = Field(..., description="Record creation timestamp")

@@ -10,7 +10,32 @@ from app.services.report_service import ReportService, get_report_service
 
 router = APIRouter()
 
-@router.post("", response_model=ReportResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", 
+    response_model=ReportResponse, 
+    status_code=status.HTTP_201_CREATED,
+    openapi_extra={
+        "requestBody": {
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "category": {"type": "string", "default": "OTHER"},
+                            "photo_url": {"type": "string"},
+                            "latitude": {"type": "number", "default": 28.6139},
+                            "longitude": {"type": "number", "default": 77.2090},
+                            "description": {"type": "string", "default": "Sample report description"},
+                            "timestamp": {"type": "string", "format": "date-time"},
+                            "reporter_id": {"type": "string", "default": "worker_101"}
+                        },
+                        "required": ["latitude", "longitude", "description"]
+                    }
+                }
+            }
+        }
+    }
+)
 async def create_report(
     request: Request,
     service: ReportService = Depends(get_report_service)

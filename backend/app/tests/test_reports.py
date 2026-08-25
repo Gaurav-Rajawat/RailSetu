@@ -18,7 +18,6 @@ class TestReportsAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
         data = response.json()
         self.assertIn("id", data)
-        self.assertEqual(data["serverId"], data["id"])
         self.assertEqual(data["category"], "TRACK")
         self.assertEqual(data["latitude"], 28.6139)
         self.assertEqual(data["status"], "pending")
