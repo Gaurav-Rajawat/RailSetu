@@ -72,14 +72,62 @@ class InMemoryReportRepository(BaseReportRepository):
         self._db[report_id] = record
         return record
 
+class SQLReportRepository(BaseReportRepository):
+    """
+    SQLAlchemy database implementation of the report repository.
+    """
+    def __init__(self, db):
+        self.db = db
+
+    def _to_dict(self, obj) -> dict:
+        if not obj:
+            return None
+        return {c.name: getattr(obj, c.name) for c in obj.__table__.columns}
+
+    def create(self, report_data: dict) -> dict:
+        from app.models.report import Report as ReportModel
+        db_report = ReportModel(**report_data)
+        self.db.add(db_report)
+        self.db.commit()
+        self.db.refresh(db_report)
+        return self._to_dict(db_report)
+
+    def get_by_id(self, report_id: str) -> Optional[dict]:
+        from app.models.report import Report as ReportModel
+        db_report = self.db.query(ReportModel).filter(ReportModel.id == report_id).first()
+        return self._to_dict(db_report)
+
+    def list_all(self) -> List[dict]:
+        from app.models.report import Report as ReportModel
+        db_reports = self.db.query(ReportModel).order_by(ReportModel.created_at.desc()).all()
+        return [self._to_dict(r) for r in db_reports]
+
+    def update(self, report_id: str, update_data: dict) -> Optional[dict]:
+        from app.models.report import Report as ReportModel
+        db_report = self.db.query(ReportModel).filter(ReportModel.id == report_id).first()
+        if not db_report:
+            return None
+        
+        for key, val in update_data.items():
+            if hasattr(db_report, key):
+                setattr(db_report, key, val)
+                
+        self.db.commit()
+        self.db.refresh(db_report)
+        return self._to_dict(db_report)
+
 # Single global instance of in-memory repo representing our current "database" state.
 # In a real app with Dependency Injection, this would be scoped to request or lifetime.
 _global_report_repo = InMemoryReportRepository()
 
-def get_report_repository() -> BaseReportRepository:
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from app.database.connection import get_db
+
+def get_report_repository(db: Session = Depends(get_db)) -> BaseReportRepository:
     """
     Dependency generator function that returns the report repository instance.
     The FastAPI route handlers can inject this using Depends(get_report_repository).
-    To switch to database persistence, change this function to return SQLReportRepository instead.
+    Returns SQLReportRepository to connect to PostgreSQL.
     """
-    return _global_report_repo
+    return SQLReportRepository(db)

@@ -1,10 +1,16 @@
 import unittest
 from fastapi.testclient import TestClient
 from app.main import app
+from app.services.report_repo import get_report_repository, InMemoryReportRepository
 
 class TestReportsAPI(unittest.TestCase):
     def setUp(self):
+        self.in_memory_repo = InMemoryReportRepository()
+        app.dependency_overrides[get_report_repository] = lambda: self.in_memory_repo
         self.client = TestClient(app)
+        
+    def tearDown(self):
+        app.dependency_overrides.clear()
 
     def test_create_report_json(self):
         payload = {
