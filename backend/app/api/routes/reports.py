@@ -102,6 +102,7 @@ async def create_report(
             
         # Optional parameters
         category_str = form_data.get("category") or "OTHER"
+        severity_str = form_data.get("severity")
         reporter_id = form_data.get("reporter_id") or form_data.get("id")
         
         try:
@@ -111,7 +112,8 @@ async def create_report(
                 latitude=latitude,
                 longitude=longitude,
                 description=str(description),
-                reporter_id=str(reporter_id) if reporter_id else None
+                reporter_id=str(reporter_id) if reporter_id else None,
+                severity=severity_str # type: ignore
             )
         except ValidationError as e:
             raise HTTPException(

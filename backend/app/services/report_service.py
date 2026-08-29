@@ -35,9 +35,9 @@ class ReportService:
         
         # Core Business Rule (Placeholder): 
         # Future AI model will determine severity based on description/photo.
-        # For now, default to "unknown" and let the admin classify or set it manually.
+        # For now, use provided severity or default to "unknown".
         report_dict["status"] = ReportStatus.PENDING
-        report_dict["severity"] = ReportSeverity.UNKNOWN
+        report_dict["severity"] = report_in.severity if report_in.severity else ReportSeverity.UNKNOWN
 
         # Save to database repository
         created_record = self.repo.create(report_dict)

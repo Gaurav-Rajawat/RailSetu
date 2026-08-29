@@ -40,6 +40,7 @@ class ReportBase(BaseModel):
 
 class ReportCreate(ReportBase):
     reporter_id: Optional[str] = Field(None, description="Unique identifier of the reporting worker (temporary until Auth is added)")
+    severity: Optional[ReportSeverity] = Field(None, description="Severity level of the report")
 
 class ReportUpdate(BaseModel):
     status: Optional[ReportStatus] = Field(None, description="Update status of the report")
