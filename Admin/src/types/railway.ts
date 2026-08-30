@@ -1,4 +1,5 @@
-export type Severity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+export type Severity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN";
+export type ReportStatus = "PENDING" | "INVESTIGATING" | "RESOLVED" | "DISMISSED";
 export type BlockStatus = "RECOMMENDED" | "APPROVED" | "REJECTED" | "MODIFIED";
 export type WorkOrderStatus = "IN_PROGRESS" | "DISPATCHED" | "PENDING_PARTS" | "COMPLETED" | "SCHEDULED";
 export type WorkOrderPriority = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
@@ -25,19 +26,17 @@ export interface Asset {
 }
 
 export interface ProblemReport {
-  id: string;           // e.g. "REP-1001"
-  assetId: string;
-  corridorId: string;
+  id: string;
+  category: string;
   description: string;
-  photoUrl: string;
+  photoUrl?: string;
   gps: { lat: number; lng: number };
-  aiSeverity: Severity;
-  aiConfidence: number; // 0-1
+  aiSeverity: Severity; // mapped from backend severity for backward compatibility in UI
+  aiConfidence: number; // mock confidence
   confirmedSeverity: Severity | null;
-  status: "NEW" | "REVIEWED" | "CONVERTED";
-  reportedAt: string;   // ISO timestamp
-  trackKm?: string;
-  suggestedAction?: string;
+  status: ReportStatus | "NEW" | "REVIEWED" | "CONVERTED";
+  reportedAt: string;
+  reporterId?: string;
 }
 
 export interface MaintenanceTask {
