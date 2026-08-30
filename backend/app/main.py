@@ -1,5 +1,7 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.api.routes import api_router
 
 from app.api.routes.reports import router as reports_compatibility_router
@@ -15,10 +17,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Ensure uploads directory exists and mount it
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 # Include API routes (handles /api/reports, /api/auth, /api/trains, etc.)
 app.include_router(api_router, prefix="/api")
-
-
 
 @app.get("/")
 def read_root():

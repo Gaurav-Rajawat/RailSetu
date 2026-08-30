@@ -54,7 +54,7 @@ async def create_report(
         msg = BytesParser(policy=default).parsebytes(msg_bytes)
         
         form_data = {}
-        files = {}
+        files = []
         
         if msg.is_multipart():
             for part in msg.iter_parts():
@@ -67,7 +67,8 @@ async def create_report(
                         if filename_match:
                             filename = filename_match.group(1)
                             payload = part.get_payload(decode=True)
-                            files[name] = (filename, payload)
+                            if name in ["photo", "photos", "photo[]", "photos[]"]:
+                                files.append((filename, payload))
                         else:
                             payload = part.get_payload(decode=True)
                             form_data[name] = payload.decode("utf-8").strip() if payload else ""
@@ -92,13 +93,18 @@ async def create_report(
             )
             
         # File parsing
-        photo_url = None
-        photo_file = files.get("photo")
-        if photo_file:
-            filename, _ = photo_file
-            # Under a cloud production environment, we would stream this upload to S3/GCS.
-            # For this task, we store a reference URL to local static uploads.
-            photo_url = f"/uploads/{filename}"
+        photo_urls = []
+        if files:
+            import os
+            import uuid
+            os.makedirs("uploads", exist_ok=True)
+            for filename, payload in files:
+                unique_filename = f"{uuid.uuid4().hex}_{filename}"
+                with open(f"uploads/{unique_filename}", "wb") as f:
+                    f.write(payload)
+                photo_urls.append(f"/uploads/{unique_filename}")
+            
+        photo_url = ",".join(photo_urls) if photo_urls else None
             
         # Optional parameters
         category_str = form_data.get("category") or "OTHER"
