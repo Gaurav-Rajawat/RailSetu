@@ -35,13 +35,13 @@ const customPinIcon = new L.Icon({
 export function LiveReportsPage() {
   const queryClient = useQueryClient();
   const {
-    activeCorridorFilter,
-    setActiveCorridorFilter,
     selectedReportId,
     setSelectedReportId,
     isReportModalOpen,
     setReportModalOpen,
   } = useUIStore();
+
+  const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
 
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -68,7 +68,7 @@ export function LiveReportsPage() {
     queryKey: [
       'reports',
       {
-        corridorId: activeCorridorFilter,
+        category: categoryFilter,
         severity: severityFilter,
         status: statusFilter,
         search: searchQuery,
@@ -76,7 +76,7 @@ export function LiveReportsPage() {
     ],
     queryFn: () =>
       railwayApi.getReports({
-        corridorId: activeCorridorFilter,
+        category: categoryFilter,
         severity: severityFilter,
         status: statusFilter,
         search: searchQuery,
@@ -85,39 +85,21 @@ export function LiveReportsPage() {
 
   // Active report object
   const activeReport = reports.find((r) => r.id === selectedReportId) || (selectedReportId ? reports.find(r => r.id === selectedReportId) : null);
-  const activeAsset = activeReport ? assets.find((a) => a.id === activeReport.assetId) : null;
+  const activeAsset = activeReport ? assets.find((a) => a.id === 'MOCK_ASSET') : null; // Using mock asset since real backend doesn't provide it yet
 
   // Mutations
-  const updateSeverityMutation = useMutation({
-    mutationFn: ({ reportId, severity }: { reportId: string; severity: Severity }) =>
-      railwayApi.updateReportSeverity(reportId, severity),
+  const updateReportMutation = useMutation({
+    mutationFn: ({ reportId, severity, status }: { reportId: string; severity?: string; status?: string }) =>
+      railwayApi.updateReport(reportId, { severity, status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
-      setActionSuccessMsg('Severity confirmed & saved to operational database.');
+      setActionSuccessMsg('Update saved to operational database.');
       setTimeout(() => setActionSuccessMsg(null), 3000);
     },
   });
 
-  const convertToTaskMutation = useMutation({
-    mutationFn: ({
-      reportId,
-      department,
-      durationMinutes,
-    }: {
-      reportId: string;
-      department: 'TRACK' | 'SIGNAL' | 'OHE';
-      durationMinutes: number;
-    }) => railwayApi.convertReportToTask(reportId, department, durationMinutes),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reports'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['coordinationOpportunities'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
-      setActionSuccessMsg('Converted to Maintenance Task in Coordination Center!');
-      setTimeout(() => setActionSuccessMsg(null), 3500);
-    },
-  });
+  const [overrideStatus, setOverrideStatus] = useState<string>('');
 
   // Sorting
   const sortedReports = [...reports].sort((a, b) => {
@@ -127,12 +109,12 @@ export function LiveReportsPage() {
     }
     if (sortField === 'corridorId') {
       return sortAsc
-        ? a.corridorId.localeCompare(b.corridorId)
-        : b.corridorId.localeCompare(a.corridorId);
+        ? a.category.localeCompare(b.category)
+        : b.category.localeCompare(a.category);
     }
     if (sortField === 'aiSeverity') {
-      const weight: Record<Severity, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
-      const diff = weight[b.aiSeverity] - weight[a.aiSeverity];
+      const weight: Record<string, number> = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1, UNKNOWN: 0 };
+      const diff = (weight[b.aiSeverity] || 0) - (weight[a.aiSeverity] || 0);
       return sortAsc ? -diff : diff;
     }
     return 0;
@@ -141,32 +123,24 @@ export function LiveReportsPage() {
   const handleRowClick = (report: ProblemReport) => {
     setSelectedReportId(report.id);
     setOverrideSeverity(report.confirmedSeverity || report.aiSeverity);
+    setOverrideStatus(report.status);
     setReportModalOpen(true);
   };
 
   const handleConfirmAiSeverity = () => {
     if (!activeReport) return;
-    updateSeverityMutation.mutate({
+    updateReportMutation.mutate({
       reportId: activeReport.id,
       severity: activeReport.aiSeverity,
     });
   };
 
   const handleSaveOverride = () => {
-    if (!activeReport || !overrideSeverity) return;
-    updateSeverityMutation.mutate({
+    if (!activeReport || (!overrideSeverity && !overrideStatus)) return;
+    updateReportMutation.mutate({
       reportId: activeReport.id,
-      severity: overrideSeverity as Severity,
-    });
-  };
-
-  const handleConvertToTask = () => {
-    if (!activeReport || !activeAsset) return;
-    const duration = activeReport.aiSeverity === 'CRITICAL' ? 120 : 60;
-    convertToTaskMutation.mutate({
-      reportId: activeReport.id,
-      department: activeAsset.type,
-      durationMinutes: duration,
+      severity: overrideSeverity || undefined,
+      status: overrideStatus || undefined,
     });
   };
 
@@ -206,20 +180,19 @@ export function LiveReportsPage() {
             />
           </div>
 
-          {/* Corridor Filter */}
+          {/* Category Filter */}
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono text-slate-400 shrink-0">CORRIDOR:</span>
+            <span className="text-[11px] font-mono text-slate-400 shrink-0">CATEGORY:</span>
             <select
-              value={activeCorridorFilter}
-              onChange={(e) => setActiveCorridorFilter(e.target.value)}
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
               className="w-full h-8 bg-slate-900 border border-slate-700 text-xs font-mono text-slate-200 px-2 rounded-none focus:outline-none focus:border-slate-500"
             >
-              <option value="ALL">ALL CORRIDORS</option>
-              {corridors.map((c) => (
-                <option key={c.id} value={c.id}>
-                  [{c.id}] {c.name}
-                </option>
-              ))}
+              <option value="ALL">ALL CATEGORIES</option>
+              <option value="TRACK">TRACK</option>
+              <option value="SIGNAL">SIGNAL</option>
+              <option value="TRACTION_OHE">TRACTION OHE</option>
+              <option value="OTHER">OTHER</option>
             </select>
           </div>
 
@@ -248,9 +221,10 @@ export function LiveReportsPage() {
               className="w-full h-8 bg-slate-900 border border-slate-700 text-xs font-mono text-slate-200 px-2 rounded-none focus:outline-none focus:border-slate-500"
             >
               <option value="ALL">ALL STATUSES</option>
-              <option value="NEW">NEW (UNREVIEWED)</option>
-              <option value="REVIEWED">REVIEWED</option>
-              <option value="CONVERTED">CONVERTED TO TASK</option>
+              <option value="PENDING">PENDING (UNREVIEWED)</option>
+              <option value="INVESTIGATING">INVESTIGATING</option>
+              <option value="RESOLVED">RESOLVED</option>
+              <option value="DISMISSED">DISMISSED</option>
             </select>
           </div>
         </div>
@@ -274,8 +248,8 @@ export function LiveReportsPage() {
                       Report ID <ArrowUpDown className="h-3 w-3" />
                     </div>
                   </th>
-                  <th className="px-3 py-2.5">Corridor</th>
-                  <th className="px-3 py-2.5">Asset ID & Type</th>
+                  <th className="px-3 py-2.5">Category</th>
+                  <th className="px-3 py-2.5">Reporter ID</th>
                   <th className="px-3 py-2.5">Defect Description</th>
                   <th
                     className="px-3 py-2.5 cursor-pointer hover:text-white"
@@ -335,17 +309,17 @@ export function LiveReportsPage() {
                           {report.id}
                         </td>
 
-                        {/* Corridor */}
+                        {/* Category */}
                         <td className="px-3 py-2.5 font-bold text-sky-400">
-                          {report.corridorId}
+                          {report.category}
                         </td>
 
-                        {/* Asset */}
+                        {/* Reporter ID */}
                         <td className="px-3 py-2.5">
                           <div className="flex flex-col">
-                            <span className="text-slate-200">{report.assetId}</span>
+                            <span className="text-slate-200">{report.reporterId || 'Anonymous'}</span>
                             <span className="text-[10px] text-slate-400 font-sans">
-                              {asset?.type || 'TRACK'} &bull; {asset?.name.substring(0, 20)}...
+                              Field Worker
                             </span>
                           </div>
                         </td>
@@ -415,8 +389,8 @@ export function LiveReportsPage() {
                   <StatusBadge status={activeReport.status} />
                 </div>
                 <div className="text-xs font-mono text-slate-400 flex items-center gap-3 mt-1">
-                  <span>CORRIDOR: <strong className="text-sky-400">{activeReport.corridorId}</strong></span>
-                  <span>ASSET: <strong className="text-slate-200">{activeReport.assetId}</strong></span>
+                  <span>CATEGORY: <strong className="text-sky-400">{activeReport.category}</strong></span>
+                  <span>REPORTER: <strong className="text-slate-200">{activeReport.reporterId || 'Anonymous'}</strong></span>
                   <span>TIME: {formatDateTime(activeReport.reportedAt)}</span>
                 </div>
               </DialogHeader>
@@ -472,7 +446,7 @@ export function LiveReportsPage() {
                       >
                         <Popup>
                           <div className="p-1 font-mono text-xs bg-slate-900 text-slate-100">
-                            {activeReport.id} ({activeReport.corridorId})
+                            {activeReport.id} ({activeReport.category})
                           </div>
                         </Popup>
                       </Marker>
@@ -550,11 +524,11 @@ export function LiveReportsPage() {
                         variant="default"
                         size="sm"
                         onClick={handleConfirmAiSeverity}
-                        disabled={updateSeverityMutation.isPending}
+                        disabled={updateReportMutation.isPending}
                         className="w-full font-mono text-[11px] flex items-center gap-1 justify-center bg-slate-800 hover:bg-slate-700 text-emerald-400 border-emerald-800"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        Confirm AI ({activeReport.aiSeverity})
+                        Confirm Current ({activeReport.aiSeverity})
                       </Button>
 
                       {/* Button 2: Override Dropdown & Submit */}
@@ -573,32 +547,41 @@ export function LiveReportsPage() {
                           variant="secondary"
                           size="xs"
                           onClick={handleSaveOverride}
-                          disabled={updateSeverityMutation.isPending}
+                          disabled={updateReportMutation.isPending}
                           className="font-mono text-[10px]"
                         >
-                          Override
+                          Save
                         </Button>
                       </div>
                     </div>
 
-                    {/* Convert to Task action */}
-                    {activeReport.status !== 'CONVERTED' ? (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={handleConvertToTask}
-                        disabled={convertToTaskMutation.isPending}
-                        className="w-full font-mono text-[11px] flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white"
-                      >
-                        <Layers className="h-3.5 w-3.5" />
-                        Generate Maintenance Task &rarr; Coordination Center
-                      </Button>
-                    ) : (
-                      <div className="text-center font-mono text-[11px] text-purple-400 bg-purple-950/50 border border-purple-800 py-1.5 flex items-center justify-center gap-1.5">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Maintenance Task Generated in Coordination Center
+                    <div className="pt-2 border-t border-slate-800">
+                      <div className="text-[11px] font-mono uppercase text-slate-400 mb-2">
+                        Update Report Status
                       </div>
-                    )}
+                      <div className="flex gap-2">
+                        <select
+                          value={overrideStatus}
+                          onChange={(e) => setOverrideStatus(e.target.value)}
+                          className="h-7 flex-1 bg-slate-900 border border-slate-700 text-xs font-mono text-slate-200 px-1.5 focus:outline-none"
+                        >
+                          <option value="PENDING">PENDING</option>
+                          <option value="INVESTIGATING">INVESTIGATING</option>
+                          <option value="RESOLVED">RESOLVED</option>
+                          <option value="DISMISSED">DISMISSED</option>
+                        </select>
+                        <Button
+                          variant="primary"
+                          size="xs"
+                          onClick={handleSaveOverride}
+                          disabled={updateReportMutation.isPending}
+                          className="font-mono text-[10px] flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white"
+                        >
+                          <CheckCircle2 className="h-3 w-3" />
+                          Update
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
