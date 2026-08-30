@@ -19,7 +19,7 @@ import {
 
 // Base Axios instance ready for future FastAPI endpoint
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
     'X-Client-Role': 'CONTROL_SUPERVISOR',
@@ -104,54 +104,79 @@ export const railwayApi = {
 
   // 4. Problem Reports (Live Defect Reports)
   getReports: async (filters?: {
-    corridorId?: string;
+    category?: string;
     severity?: string;
     status?: string;
     search?: string;
   }): Promise<ProblemReport[]> => {
-    return simulateLatency(() => {
-      let reports = mockDb.getReports();
+    const res = await apiClient.get<any[]>('/reports');
+    let reports: ProblemReport[] = res.data.map(r => ({
+      id: r.id,
+      category: r.category,
+      description: r.description,
+      photoUrl: r.photo_url || undefined,
+      gps: { lat: r.latitude, lng: r.longitude },
+      aiSeverity: (r.severity?.toUpperCase() || 'UNKNOWN') as Severity,
+      aiConfidence: 0.95, // Default confidence
+      confirmedSeverity: null,
+      status: (r.status?.toUpperCase() || 'PENDING') as any,
+      reportedAt: r.created_at || r.timestamp,
+      reporterId: r.reporter_id || undefined,
+    }));
 
-      if (filters?.corridorId && filters.corridorId !== 'ALL') {
-        reports = reports.filter(r => r.corridorId === filters.corridorId);
-      }
-
-      if (filters?.severity && filters.severity !== 'ALL') {
-        reports = reports.filter(
-          r => (r.confirmedSeverity || r.aiSeverity) === filters.severity
-        );
-      }
-
-      if (filters?.status && filters.status !== 'ALL') {
-        reports = reports.filter(r => r.status === filters.status);
-      }
-
-      if (filters?.search) {
-        const query = filters.search.toLowerCase();
-        reports = reports.filter(
-          r =>
-            r.id.toLowerCase().includes(query) ||
-            r.description.toLowerCase().includes(query) ||
-            r.assetId.toLowerCase().includes(query)
-        );
-      }
-
-      // Sort newest first
-      return reports.sort(
-        (a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime()
+    if (filters?.category && filters.category !== 'ALL') {
+      reports = reports.filter(r => r.category.toUpperCase() === filters.category);
+    }
+    if (filters?.severity && filters.severity !== 'ALL') {
+      reports = reports.filter(r => r.aiSeverity === filters.severity);
+    }
+    if (filters?.status && filters.status !== 'ALL') {
+      reports = reports.filter(r => r.status === filters.status);
+    }
+    if (filters?.search) {
+      const query = filters.search.toLowerCase();
+      reports = reports.filter(r => 
+        r.id.toLowerCase().includes(query) || 
+        r.description.toLowerCase().includes(query) ||
+        r.category.toLowerCase().includes(query)
       );
-    });
+    }
+    
+    // Sort newest first
+    return reports.sort(
+      (a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime()
+    );
   },
 
   getReportById: async (id: string): Promise<ProblemReport | undefined> => {
-    return simulateLatency(() => mockDb.getReportById(id));
+    const res = await apiClient.get<any>(`/reports/${id}`);
+    const r = res.data;
+    return {
+      id: r.id,
+      category: r.category,
+      description: r.description,
+      photoUrl: r.photo_url || undefined,
+      gps: { lat: r.latitude, lng: r.longitude },
+      aiSeverity: (r.severity?.toUpperCase() || 'UNKNOWN') as Severity,
+      aiConfidence: 0.95,
+      confirmedSeverity: null,
+      status: (r.status?.toUpperCase() || 'PENDING') as any,
+      reportedAt: r.created_at || r.timestamp,
+      reporterId: r.reporter_id || undefined,
+    };
   },
 
-  updateReportSeverity: async (
+  updateReport: async (
     reportId: string,
-    confirmedSeverity: Severity
-  ): Promise<ProblemReport> => {
-    return simulateLatency(() => mockDb.updateReportSeverity(reportId, confirmedSeverity));
+    updateData: { severity?: string, status?: string }
+  ): Promise<void> => {
+    // API accepts lowercase statuses and severities generally, but pydantic ignores case if properly setup,
+    // let's send exactly what backend expects (lowercase is safest for enum matching often)
+    const payload: any = {};
+    if (updateData.severity) payload.severity = updateData.severity.toLowerCase();
+    if (updateData.status) payload.status = updateData.status.toLowerCase();
+    
+    await apiClient.patch(`/reports/${reportId}`, payload);
   },
 
   convertReportToTask: async (
