@@ -478,7 +478,7 @@ export function LiveReportsPage() {
                       <div className="text-[10px] font-mono uppercase text-slate-400 mb-1">
                         Field Telemetry & Description
                       </div>
-                      <p className="text-xs text-slate-200 leading-relaxed font-sans">
+                      <p className="text-xs text-slate-200 leading-relaxed font-sans break-all whitespace-pre-wrap max-h-32 overflow-y-auto custom-scrollbar">
                         {activeReport.description}
                       </p>
                     </div>
@@ -491,7 +491,7 @@ export function LiveReportsPage() {
                         </div>
                         <div className="flex justify-between text-slate-300">
                           <span>NAME:</span>
-                          <span className="text-slate-100 font-bold">{activeAsset.name}</span>
+                          <span className="text-slate-100 font-bold break-all">{activeAsset.name}</span>
                         </div>
                         <div className="flex justify-between text-slate-300">
                           <span>DISCIPLINE:</span>
@@ -530,11 +530,11 @@ export function LiveReportsPage() {
                   {/* Supervisor Action Box: Confirm / Override Severity */}
                   <div className="border border-slate-700 bg-slate-950 p-3 space-y-3">
                     <div className="text-[11px] font-mono font-bold uppercase text-slate-200 flex items-center gap-1.5">
-                      <AlertOctagon className="h-3.5 w-3.5 text-amber-400" />
-                      Supervisor Severity Confirmation & Override
+                      <AlertOctagon className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                      Supervisor Confirmation
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-2">
                       {/* Button 1: Instant Confirm AI */}
                       <Button
                         variant="default"
@@ -543,16 +543,16 @@ export function LiveReportsPage() {
                         disabled={updateReportMutation.isPending}
                         className="w-full font-mono text-[11px] flex items-center gap-1 justify-center bg-slate-800 hover:bg-slate-700 text-emerald-400 border-emerald-800"
                       >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Confirm Current ({activeReport.aiSeverity})
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">Confirm Current ({activeReport.aiSeverity})</span>
                       </Button>
 
                       {/* Button 2: Override Dropdown & Submit */}
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 w-full">
                         <select
                           value={overrideSeverity}
                           onChange={(e) => setOverrideSeverity(e.target.value as Severity)}
-                          className="h-7 flex-1 bg-slate-900 border border-slate-700 text-xs font-mono text-slate-200 px-1.5 focus:outline-none"
+                          className="h-8 flex-1 bg-slate-900 border border-slate-700 text-xs font-mono text-slate-200 px-1.5 focus:outline-none min-w-0"
                         >
                           <option value="CRITICAL">CRITICAL</option>
                           <option value="HIGH">HIGH</option>
