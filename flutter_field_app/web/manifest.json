@@ -1,6 +1,6 @@
 {
-    "name": "railsetu_field_app",
-    "short_name": "railsetu_field_app",
+    "name": "RailSetu Field",
+    "short_name": "RailSetu Field",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
