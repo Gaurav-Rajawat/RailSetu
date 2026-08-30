@@ -51,7 +51,7 @@ export function DialogContent({
   return (
     <div
       className={cn(
-        "relative w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 shadow-2xl overflow-hidden transition-all",
+        "relative w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111827] text-slate-900 dark:text-slate-100 shadow-2xl overflow-hidden transition-all p-6",
         maxWidth,
         className
       )}
