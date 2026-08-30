@@ -23,6 +23,9 @@ type ExtendedStatus =
   | "REVIEWED"
   | "CONVERTED"
   | "PENDING"
+  | "INVESTIGATING"
+  | "RESOLVED"
+  | "DISMISSED"
   | "COORDINATED"
   | "SCHEDULED"
   | "DONE";
@@ -64,6 +67,13 @@ export function StatusBadge({ status, showIcon = true, className }: StatusBadgeP
         <Badge variant="low" className={className}>
           {showIcon && <Info className="w-3 h-3 mr-1 text-blue-600 dark:text-blue-400" />}
           LOW
+        </Badge>
+      );
+    case "UNKNOWN":
+      return (
+        <Badge variant="outline" className={`border-slate-500 text-slate-400 bg-slate-900 ${className || ''}`}>
+          {showIcon && <Info className="w-3 h-3 mr-1" />}
+          UNKNOWN
         </Badge>
       );
 
@@ -156,33 +166,44 @@ export function StatusBadge({ status, showIcon = true, className }: StatusBadgeP
         </Badge>
       );
 
-    // Report Statuses
     case "NEW":
+    case "PENDING":
       return (
         <Badge
           variant="outline"
           className={`border-sky-300 dark:border-sky-700 text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/50 ${className || ''}`}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-1.5 animate-ping" />
-          NEW
+          {upper}
         </Badge>
       );
     case "REVIEWED":
+    case "INVESTIGATING":
       return (
         <Badge
           variant="outline"
           className={`border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 ${className || ''}`}
         >
-          REVIEWED
+          {upper}
         </Badge>
       );
     case "CONVERTED":
+    case "RESOLVED":
       return (
         <Badge
           variant="secondary"
           className={`border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 ${className || ''}`}
         >
-          TASK GENERATED
+          {upper}
+        </Badge>
+      );
+    case "DISMISSED":
+      return (
+        <Badge
+          variant="outline"
+          className={`border-slate-300 dark:border-slate-700 text-slate-500 bg-slate-50 dark:bg-slate-950/40 ${className || ''}`}
+        >
+          DISMISSED
         </Badge>
       );
 
