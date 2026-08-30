@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:railsetu_field_app/core/config/env.dart';
 import 'package:railsetu_field_app/core/constants/app_constants.dart';
 import 'package:railsetu_field_app/core/theme/app_theme.dart';
 import 'package:railsetu_field_app/models/report.dart';
@@ -157,14 +158,20 @@ class _ReportDetailsScreenState extends State<ReportDetailsScreen> {
         itemCount: paths.length,
         separatorBuilder: (context, index) => const SizedBox(width: 16),
         itemBuilder: (context, index) {
-          final path = paths[index];
+          String path = paths[index];
+          if (path.startsWith('/uploads')) {
+            final baseUrl = Env.apiBaseUrl.replaceAll(RegExp(r'/api$'), '');
+            path = '$baseUrl$path';
+          }
           return Container(
             width: 300,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border),
               image: DecorationImage(
-                image: kIsWeb ? NetworkImage(path) as ImageProvider : FileImage(File(path)),
+                image: (path.startsWith('http') || path.startsWith('blob:')) 
+                    ? NetworkImage(path) as ImageProvider 
+                    : FileImage(File(path)),
                 fit: BoxFit.cover,
               ),
             ),
