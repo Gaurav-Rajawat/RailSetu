@@ -412,16 +412,32 @@ export function LiveReportsPage() {
                     <div className="absolute top-2 left-2 z-10 bg-slate-950/90 border border-slate-700 px-2 py-0.5 text-[10px] font-mono text-slate-300">
                       OPTICAL CAPTURE &bull; AI HIGHLIGHT
                     </div>
-                    <img
-                      src={activeReport.photoUrl}
-                      alt={`Defect ${activeReport.id}`}
-                      className="w-full h-48 object-cover object-center brightness-95 contrast-105"
-                      onError={(e) => {
-                        // Fallback placeholder if offline
-                        (e.target as HTMLImageElement).src =
-                          'https://images.unsplash.com/photo-1541888946425-d0fbb18f15f6?auto=format&fit=crop&w=800&q=80';
-                      }}
-                    />
+                    {activeReport.photoUrl ? (
+                      <div className="flex overflow-x-auto snap-x snap-mandatory w-full h-48 pb-1 gap-1">
+                        {activeReport.photoUrl.split(',').map((url, idx, arr) => (
+                          <div key={idx} className={`${arr.length > 1 ? 'w-[90%]' : 'w-full'} h-full flex-shrink-0 snap-center relative`}>
+                            <img
+                              src={url.trim()}
+                              alt={`Defect ${activeReport.id} - ${idx + 1}`}
+                              className="w-full h-full object-cover object-center brightness-95 contrast-105"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src =
+                                  'https://images.unsplash.com/photo-1541888946425-d0fbb18f15f6?auto=format&fit=crop&w=800&q=80';
+                              }}
+                            />
+                            {arr.length > 1 && (
+                               <div className="absolute bottom-1 right-1 bg-black/60 text-[10px] text-white px-1.5 py-0.5 rounded font-mono">
+                                 {idx + 1} / {arr.length}
+                               </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="w-full h-48 flex items-center justify-center text-slate-600 font-mono text-xs bg-slate-900">
+                        NO PHOTO
+                      </div>
+                    )}
                   </div>
 
                   {/* Leaflet GPS Map Pin */}

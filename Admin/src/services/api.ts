@@ -40,6 +40,20 @@ const simulateLatency = <T>(fn: () => T, minMs = 150, maxMs = 350): Promise<T> =
   });
 };
 
+const getFullImageUrl = (pathStr: string | null | undefined): string | undefined => {
+  if (!pathStr) return undefined;
+  
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+  let rootUrl = baseUrl.endsWith('/api') ? baseUrl.slice(0, -4) : baseUrl;
+  if (!rootUrl) rootUrl = 'http://127.0.0.1:8000'; // fallback
+  
+  return pathStr.split(',').map(path => {
+    path = path.trim();
+    if (path.startsWith('http') || path.startsWith('blob:')) return path;
+    return `${rootUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+  }).join(',');
+};
+
 // ==========================================
 // RAILWAY CONTROL CENTER API SERVICES
 // ==========================================
@@ -114,7 +128,7 @@ export const railwayApi = {
       id: r.id,
       category: r.category,
       description: r.description,
-      photoUrl: r.photo_url || undefined,
+      photoUrl: getFullImageUrl(r.photo_url),
       gps: { lat: r.latitude, lng: r.longitude },
       aiSeverity: (r.severity?.toUpperCase() || 'UNKNOWN') as Severity,
       aiConfidence: 0.95, // Default confidence
@@ -155,7 +169,7 @@ export const railwayApi = {
       id: r.id,
       category: r.category,
       description: r.description,
-      photoUrl: r.photo_url || undefined,
+      photoUrl: getFullImageUrl(r.photo_url),
       gps: { lat: r.latitude, lng: r.longitude },
       aiSeverity: (r.severity?.toUpperCase() || 'UNKNOWN') as Severity,
       aiConfidence: 0.95,
