@@ -68,6 +68,12 @@ export function Sidebar() {
       badge: null,
     },
     {
+      name: 'AI Block Planner',
+      path: '/blocks',
+      icon: Wrench,
+      badge: null,
+    },
+    {
       name: 'Settings',
       path: '/settings',
       icon: Settings,
