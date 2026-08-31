@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { railwayApi } from '@/services/api';
 import {
   LayoutDashboard,
-  Activity,
+
   Train,
   FileWarning,
   Wrench,
@@ -41,12 +41,7 @@ export function Sidebar() {
       icon: LayoutDashboard,
       badge: null,
     },
-    {
-      name: 'Track Health',
-      path: '/track-health',
-      icon: Activity,
-      badge: null,
-    },
+
     {
       name: 'Fleet Depot',
       path: '/fleet-depot',
