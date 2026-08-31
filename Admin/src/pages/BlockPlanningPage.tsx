@@ -26,6 +26,12 @@ import {
 } from 'lucide-react';
 
 export function BlockPlanningPage() {
+  const calculateDurationMinutes = (start: string, end: string) => {
+    const s = new Date(start).getTime();
+    const e = new Date(end).getTime();
+    return Math.max(0, Math.round((e - s) / 60000));
+  };
+
   const queryClient = useQueryClient();
   const { activeCorridorFilter, setActiveCorridorFilter } = useUIStore();
 
@@ -45,7 +51,10 @@ export function BlockPlanningPage() {
     queryKey: ['corridors'],
     queryFn: railwayApi.getCorridors,
   });
-
+  const { data: maintenanceTasks = [] } = useQuery({
+    queryKey: ['maintenanceTasks'],
+    queryFn: railwayApi.getTasks,
+  });
   const { data: blocks = [], isLoading } = useQuery({
     queryKey: ['blocks', { status: activeTab }],
     queryFn: () => railwayApi.getBlocks(activeTab === 'ALL' ? undefined : (activeTab as BlockStatus)),
@@ -97,6 +106,38 @@ export function BlockPlanningPage() {
       total + calculateDurationMinutes(block.startTime, block.endTime),
     0
   );
+  // Estimated optimization impact from coordinated maintenance.
+  const coordinatedTaskMinutes = coordinatedBlocks.reduce(
+    (total, block) => {
+      const taskMinutes = block.taskIds.reduce(
+        (sum, taskId) => {
+          const task = maintenanceTasks.find((t) => t.id === taskId);
+          return sum + (task?.durationMinutes ?? 45);
+        },
+        0
+      );
+
+      return total + taskMinutes;
+    },
+    0
+  );
+
+  const coordinatedBlockMinutes = coordinatedBlocks.reduce(
+    (total, block) =>
+      total + calculateDurationMinutes(block.startTime, block.endTime),
+    0
+  );
+
+  const estimatedTimeSaved = Math.max(
+    0,
+    coordinatedTaskMinutes - coordinatedBlockMinutes
+  );
+  const optimizationRate =
+    coordinatedTaskMinutes > 0
+      ? Math.round(
+        (estimatedTimeSaved / coordinatedTaskMinutes) * 100
+      )
+      : 0;
 
   const averagePriorityScore =
     recommendedBlocks.length > 0
@@ -162,11 +203,6 @@ export function BlockPlanningPage() {
     updateBlockStatusMutation.mutate({ blockId: rejectBlock.id, status: 'REJECTED' });
   };
 
-  const calculateDurationMinutes = (start: string, end: string) => {
-    const s = new Date(start).getTime();
-    const e = new Date(end).getTime();
-    return Math.max(0, Math.round((e - s) / 60000));
-  };
 
   return (
     <div className="space-y-4 max-w-[1600px] mx-auto">
@@ -333,6 +369,68 @@ export function BlockPlanningPage() {
             </div>
             <div className="text-[9px] text-slate-500 font-mono">
               AI task priority
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* AI Optimization Impact */}
+      <div className="border border-emerald-900/60 bg-emerald-950/10 p-3">
+        <div className="flex items-center gap-2 mb-3">
+          <Gauge className="h-4 w-4 text-emerald-400" />
+          <span className="text-xs font-bold font-mono uppercase tracking-wider text-emerald-300">
+            AI OPTIMIZATION IMPACT
+          </span>
+          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
+            ESTIMATED
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="bg-slate-950/70 border border-slate-800 p-2.5">
+            <div className="text-[9px] text-slate-500 font-mono uppercase">
+              Separate Task Time
+            </div>
+            <div className="text-lg font-bold text-slate-200 font-mono mt-1">
+              {formatDuration(coordinatedTaskMinutes)}
+            </div>
+            <div className="text-[9px] text-slate-500 font-mono">
+              if planned independently
+            </div>
+          </div>
+
+          <div className="bg-slate-950/70 border border-slate-800 p-2.5">
+            <div className="text-[9px] text-slate-500 font-mono uppercase">
+              Coordinated Window
+            </div>
+            <div className="text-lg font-bold text-blue-400 font-mono mt-1">
+              {formatDuration(coordinatedBlockMinutes)}
+            </div>
+            <div className="text-[9px] text-slate-500 font-mono">
+              shared maintenance block
+            </div>
+          </div>
+
+          <div className="bg-slate-950/70 border border-slate-800 p-2.5">
+            <div className="text-[9px] text-slate-500 font-mono uppercase">
+              Estimated Time Saved
+            </div>
+            <div className="text-lg font-bold text-emerald-400 font-mono mt-1">
+              {formatDuration(estimatedTimeSaved)}
+            </div>
+            <div className="text-[9px] text-slate-500 font-mono">
+              reduced infrastructure downtime
+            </div>
+          </div>
+
+          <div className="bg-slate-950/70 border border-slate-800 p-2.5">
+            <div className="text-[9px] text-slate-500 font-mono uppercase">
+              Optimization Rate
+            </div>
+            <div className="text-lg font-bold text-violet-400 font-mono mt-1">
+              {optimizationRate}%
+            </div>
+            <div className="text-[9px] text-slate-500 font-mono">
+              block utilization efficiency
             </div>
           </div>
         </div>
