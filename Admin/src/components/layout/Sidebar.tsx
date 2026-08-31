@@ -9,7 +9,7 @@ import {
   FileWarning,
   Wrench,
   Users,
-  Cpu,
+
   Settings,
   AlertOctagon,
   ChevronLeft,
@@ -65,12 +65,6 @@ export function Sidebar() {
       name: 'Crew Dispatch',
       path: '/crew-dispatch',
       icon: Users,
-      badge: null,
-    },
-    {
-      name: 'Sensor Diagnostics',
-      path: '/sensor-diagnostics',
-      icon: Cpu,
       badge: null,
     },
     {
