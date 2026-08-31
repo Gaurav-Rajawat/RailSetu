@@ -41,13 +41,6 @@ export function Sidebar() {
       icon: LayoutDashboard,
       badge: null,
     },
-
-    {
-      name: 'Fleet Depot',
-      path: '/fleet-depot',
-      icon: Train,
-      badge: null,
-    },
     {
       name: 'Live Faults',
       path: '/reports',

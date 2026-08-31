@@ -17,7 +17,6 @@ export function App() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<OverviewPage />} />
         <Route path="/track-health" element={<TrackHealthPage />} />
-        <Route path="/fleet-depot" element={<FleetDepotPage />} />
         <Route path="/reports" element={<LiveReportsPage />} />
         <Route path="/work-orders" element={<WorkOrdersPage />} />
         <Route path="/coordination" element={<CoordinationPage />} />
