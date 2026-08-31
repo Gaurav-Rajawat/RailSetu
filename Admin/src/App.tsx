@@ -10,8 +10,11 @@ import { BlockPlanningPage } from './pages/BlockPlanningPage';
 import { CrewDispatchPage } from './pages/CrewDispatchPage';
 
 import { SettingsPage } from './pages/SettingsPage';
+import { useAdminWebSocket } from './hooks/useAdminWebSocket';
 
 export function App() {
+  useAdminWebSocket();
+
   return (
     <Routes>
       <Route element={<AppLayout />}>

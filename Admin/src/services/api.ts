@@ -40,7 +40,7 @@ const simulateLatency = <T>(fn: () => T, minMs = 150, maxMs = 350): Promise<T> =
   });
 };
 
-const getFullImageUrl = (pathStr: string | null | undefined): string | undefined => {
+export const getFullImageUrl = (pathStr: string | null | undefined): string | undefined => {
   if (!pathStr) return undefined;
   
   const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';

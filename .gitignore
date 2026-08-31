@@ -164,3 +164,7 @@ cython_debug/
 .env
 .venv/
 __pycache__/
+
+# Ignore specific uploaded images
+backend/uploads/898b6a45fca4453dab2663d5f0ddc604_75675cba-b5d6-4e5e-8555-6db68aeb195e9019093325661486747.jpg
+backend/uploads/9cc28c72fabb491cb39df81898beb2c5_f91232e1-ba0e-466f-8584-3092183e3c1e8133670580206914999.jpg

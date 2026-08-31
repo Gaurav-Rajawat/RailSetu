@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import Depends, HTTPException, status
+import asyncio
+from app.websocket.manager import manager as ws_manager
 from app.schemas.report import ReportCreate, ReportUpdate, ReportResponse, ReportStatus, ReportSeverity
 from app.services.report_repo import BaseReportRepository, get_report_repository
 
@@ -45,8 +47,18 @@ class ReportService:
         # Future hooks go here (e.g. send real-time Websocket notification to admin dashboard, call AI analyzer)
         # self.websocket_manager.broadcast_new_report(created_record)
         # self.ai_classifier.classify_severity(created_record["id"])
+        
+        try:
+            loop = asyncio.get_running_loop()
+            # Convert to dict to avoid datetime json serialization issues when broadcasting
+            # ReportResponse model_dump does a good job
+            validated_response = ReportResponse.model_validate(created_record)
+            report_data = validated_response.model_dump(mode='json')
+            loop.create_task(ws_manager.broadcast({"type": "report_created", "report": report_data}))
+        except Exception as e:
+            pass
 
-        return ReportResponse.model_validate(created_record)
+        return validated_response
 
     def get_report(self, report_id: str) -> ReportResponse:
         record = self.repo.get_by_id(report_id)
@@ -84,8 +96,17 @@ class ReportService:
                 detail=f"Report with ID '{report_id}' not found during update."
             )
 
+        validated_response = ReportResponse.model_validate(updated_record)
+        
+        try:
+            loop = asyncio.get_running_loop()
+            report_data = validated_response.model_dump(mode='json')
+            loop.create_task(ws_manager.broadcast({"type": "report_updated", "report": report_data}))
+        except Exception as e:
+            pass
+
         # Future hooks (e.g. notify admin of status changes)
-        return ReportResponse.model_validate(updated_record)
+        return validated_response
 
 
 def get_report_service(
