@@ -7,6 +7,7 @@ import 'package:railsetu_field_app/repositories/mock_auth_repository.dart';
 import 'package:railsetu_field_app/repositories/api_report_repository.dart';
 import 'package:railsetu_field_app/repositories/mock_report_repository.dart';
 import 'package:railsetu_field_app/repositories/report_repository.dart';
+import 'package:railsetu_field_app/services/websocket_service.dart';
 import 'package:railsetu_field_app/screens/create_report_screen.dart';
 import 'package:railsetu_field_app/screens/home_screen.dart';
 import 'package:railsetu_field_app/screens/login_screen.dart';
@@ -33,6 +34,7 @@ class RailSetuApp extends StatelessWidget {
         // when backend is ready.
         Provider<ReportRepository>(create: (_) => ApiReportRepository()),
         Provider<AuthRepository>(create: (_) => MockAuthRepository()),
+        ChangeNotifierProvider<WebSocketService>(create: (_) => WebSocketService(), lazy: false),
       ],
       child: MaterialApp(
         title: 'RailSetu',

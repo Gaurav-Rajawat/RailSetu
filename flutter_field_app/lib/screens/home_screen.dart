@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:railsetu_field_app/core/constants/app_constants.dart';
+import 'package:railsetu_field_app/services/websocket_service.dart';
 import 'package:railsetu_field_app/core/theme/app_theme.dart';
 import 'package:railsetu_field_app/models/report.dart';
 import 'package:railsetu_field_app/models/user.dart';
@@ -29,11 +31,27 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<ReportStatus, int> _stats = {};
   List<Report> _recentReports = [];
   bool _loading = true;
+  StreamSubscription? _wsSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    
+    // Listen for WebSocket updates silently
+    Future.microtask(() {
+      _wsSubscription = context.read<WebSocketService>().messages.listen((data) {
+        if (data['type'] == 'report_created' || data['type'] == 'report_updated') {
+          _loadData();
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _wsSubscription?.cancel();
+    super.dispose();
   }
 
   String? _errorMessage;

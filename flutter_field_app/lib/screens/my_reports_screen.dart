@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:railsetu_field_app/core/constants/app_constants.dart';
+import 'package:railsetu_field_app/services/websocket_service.dart';
 import 'package:railsetu_field_app/models/report.dart';
 import 'package:railsetu_field_app/repositories/report_repository.dart';
 import 'package:railsetu_field_app/widgets/report_card.dart';
@@ -20,15 +22,35 @@ class _MyReportsScreenState extends State<MyReportsScreen> {
   List<Report> _allReports = [];
   ReportStatus? _filter;
   bool _loading = true;
+  StreamSubscription? _wsSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadReports();
+    
+    // Listen for WebSocket updates silently
+    Future.microtask(() {
+      _wsSubscription = context.read<WebSocketService>().messages.listen((data) {
+        if (data['type'] == 'report_created' || data['type'] == 'report_updated') {
+          _silentLoadReports();
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _wsSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadReports() async {
     setState(() => _loading = true);
+    await _silentLoadReports();
+  }
+
+  Future<void> _silentLoadReports() async {
     final repo = context.read<ReportRepository>();
     final reports = await repo.getReports();
     if (mounted) {

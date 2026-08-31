@@ -16,4 +16,16 @@ class Env {
       return 'http://127.0.0.1:8000/api'; // iOS Simulator loopback / Others
     }
   }
+
+  static String get wsBaseUrl {
+    if (kIsWeb) {
+      return 'ws://127.0.0.1:8000/api'; // Flutter Web/PC
+    } else if (Platform.isAndroid) {
+      return isEmulator 
+          ? 'ws://10.0.2.2:8000/api' // Android Emulator
+          : 'ws://192.168.1.10:8000/api'; // Physical Android phone/APK
+    } else {
+      return 'ws://127.0.0.1:8000/api'; // iOS Simulator loopback / Others
+    }
+  }
 }
