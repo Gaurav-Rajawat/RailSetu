@@ -2,14 +2,18 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class Env {
+  // Set to true if running on Android Emulator, false if running on physical device
+  static const bool isEmulator = false;
+
   static String get apiBaseUrl {
-    // If testing on a physical device, change all these to your PC's IP address (e.g., http://192.168.1.X:8000/api)
     if (kIsWeb) {
-      return 'http://127.0.0.1:8000/api';
+      return 'http://127.0.0.1:8000/api'; // Flutter Web/PC
     } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8000/api'; // Android Emulator loopback
+      return isEmulator 
+          ? 'http://10.0.2.2:8000/api' // Android Emulator
+          : 'http://192.168.1.10:8000/api'; // Physical Android phone/APK
     } else {
-      return 'http://127.0.0.1:8000/api'; // iOS Simulator loopback
+      return 'http://127.0.0.1:8000/api'; // iOS Simulator loopback / Others
     }
   }
 }

@@ -27,8 +27,8 @@ This is the foundational FastAPI backend for the RailSetu project.
 
 3. **Run the development server**:
    ```bash
-   # From the backend directory
-   uvicorn app.main:app --reload
+   # From the backend directory (use --host 0.0.0.0 so physical mobile devices on Wi-Fi can connect)
+   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
    ```
 
 The application will be available at `http://127.0.0.1:8000`. You can also view the interactive API documentation at `http://127.0.0.1:8000/docs`.
