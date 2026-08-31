@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { railwayApi } from '@/services/api';
 import {
   LayoutDashboard,
-
   Train,
   FileWarning,
   Wrench,
@@ -12,8 +11,11 @@ import {
 
   Settings,
   AlertOctagon,
+
   ChevronLeft,
   ChevronRight,
+  BrainCircuit,
+  CalendarClock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +54,24 @@ export function Sidebar() {
       ) : null,
     },
     {
+      name: 'Maintenance Inputs',
+      path: '/coordination',
+      icon: Wrench,
+      badge: null,
+    },
+    {
+      name: 'AI Block Planner',
+      path: '/blocks',
+      icon: BrainCircuit,
+      badge: null,
+    },
+    {
+      name: 'Block Calendar',
+      path: '/blocks',
+      icon: CalendarClock,
+      badge: null,
+    },
+    {
       name: 'Work Orders',
       path: '/work-orders',
       icon: Wrench,
@@ -65,12 +85,6 @@ export function Sidebar() {
       name: 'Crew Dispatch',
       path: '/crew-dispatch',
       icon: Users,
-      badge: null,
-    },
-    {
-      name: 'AI Block Planner',
-      path: '/blocks',
-      icon: Wrench,
       badge: null,
     },
     {
