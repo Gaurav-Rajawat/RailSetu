@@ -27,7 +27,14 @@ export function Header() {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [latency] = useState<number>(34);
   const [isNotifOpen, setIsNotifOpen] = useState<boolean>(false);
-  const [readNotifs, setReadNotifs] = useState<string[]>([]);
+  const [readNotifs, setReadNotifs] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('railsetu_read_notifications');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Live IST Clock
   useEffect(() => {
@@ -219,7 +226,14 @@ export function Header() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setReadNotifs(sampleNotifs.map((n) => n.id))}
+                  onClick={() => {
+                    const allReadIds = sampleNotifs.map((n) => n.id);
+                    setReadNotifs(allReadIds);
+                    localStorage.setItem(
+                      'railsetu_read_notifications',
+                      JSON.stringify(allReadIds)
+                    );
+                  }}
                   className="text-[10px] font-mono text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   Mark all read
@@ -233,18 +247,18 @@ export function Header() {
                     <div
                       key={n.id}
                       className={`p-3 transition-colors ${isRead
-                          ? 'bg-transparent opacity-75'
-                          : 'bg-blue-50/40 dark:bg-blue-950/20'
+                        ? 'bg-transparent opacity-75'
+                        : 'bg-blue-50/40 dark:bg-blue-950/20'
                         }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-1.5">
                           <span
                             className={`w-2 h-2 rounded-full ${n.type === 'CRITICAL'
-                                ? 'bg-red-500 animate-pulse'
-                                : n.type === 'WARNING'
-                                  ? 'bg-amber-500'
-                                  : 'bg-blue-500'
+                              ? 'bg-red-500 animate-pulse'
+                              : n.type === 'WARNING'
+                                ? 'bg-amber-500'
+                                : 'bg-blue-500'
                               }`}
                           />
                           <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
