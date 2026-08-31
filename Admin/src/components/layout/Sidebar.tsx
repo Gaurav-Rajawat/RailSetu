@@ -15,7 +15,6 @@ import {
   ChevronLeft,
   ChevronRight,
   BrainCircuit,
-  CalendarClock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -65,12 +64,7 @@ export function Sidebar() {
       icon: BrainCircuit,
       badge: null,
     },
-    {
-      name: 'Block Calendar',
-      path: '/blocks',
-      icon: CalendarClock,
-      badge: null,
-    },
+
     {
       name: 'Work Orders',
       path: '/work-orders',
