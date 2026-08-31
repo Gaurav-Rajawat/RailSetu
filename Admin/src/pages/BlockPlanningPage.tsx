@@ -10,6 +10,7 @@ import { DepartmentBadge } from '@/components/common/DepartmentBadge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { formatDateTime, formatDuration } from '@/lib/utils';
+
 import {
   CalendarClock,
   CheckCircle,
@@ -18,6 +19,10 @@ import {
   Layers,
   Search,
   CheckCircle2,
+  BrainCircuit,
+  Gauge,
+  Clock3,
+  Network,
 } from 'lucide-react';
 
 export function BlockPlanningPage() {
@@ -81,7 +86,42 @@ export function BlockPlanningPage() {
       }, 2500);
     },
   });
+  // AI planning summary derived from the current block plan.
+  const recommendedBlocks = blocks.filter((b) => b.status === 'RECOMMENDED');
+  const coordinatedBlocks = blocks.filter(
+    (b) => b.departmentsInvolved.length >= 2
+  );
 
+  const totalPlannedMinutes = blocks.reduce(
+    (total, block) =>
+      total + calculateDurationMinutes(block.startTime, block.endTime),
+    0
+  );
+
+  const averagePriorityScore =
+    recommendedBlocks.length > 0
+      ? Math.round(
+        (recommendedBlocks.reduce(
+          (total, block) => total + block.taskIds.length * 20,
+          0
+        ) /
+          recommendedBlocks.reduce(
+            (total, block) => total + block.taskIds.length,
+            0
+          )) *
+        1
+      )
+      : 0;
+
+  const coordinationRate =
+    blocks.length > 0
+      ? Math.round((coordinatedBlocks.length / blocks.length) * 100)
+      : 0;
+
+  const planningCorridors = new Set(blocks.map((b) => b.corridorId)).size;
+  const planningDepartments = new Set(
+    blocks.flatMap((b) => b.departmentsInvolved)
+  ).size;
   // Filter blocks
   const filteredBlocks = blocks.filter((b) => {
     if (activeCorridorFilter !== 'ALL' && b.corridorId !== activeCorridorFilter) {
@@ -156,7 +196,147 @@ export function BlockPlanningPage() {
           <span>{actionSuccessMsg}</span>
         </div>
       )}
+      {/* AI Planning Summary */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <Card className="border-slate-800">
+          <CardContent className="p-3">
+            <p className="text-[10px] font-mono text-slate-400 uppercase">
+              AI Recommended Blocks
+            </p>
+            <p className="text-2xl font-bold text-blue-400 font-mono mt-1">
+              {recommendedBlocks.length}
+            </p>
+          </CardContent>
+        </Card>
 
+        <Card className="border-slate-800">
+          <CardContent className="p-3">
+            <p className="text-[10px] font-mono text-slate-400 uppercase">
+              Coordinated Blocks
+            </p>
+            <p className="text-2xl font-bold text-emerald-400 font-mono mt-1">
+              {coordinatedBlocks.length}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-800">
+          <CardContent className="p-3">
+            <p className="text-[10px] font-mono text-slate-400 uppercase">
+              Planning Corridors
+            </p>
+            <p className="text-2xl font-bold text-sky-400 font-mono mt-1">
+              {planningCorridors}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-800">
+          <CardContent className="p-3">
+            <p className="text-[10px] font-mono text-slate-400 uppercase">
+              Departments Coordinated
+            </p>
+            <p className="text-2xl font-bold text-purple-400 font-mono mt-1">
+              {planningDepartments}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-800">
+          <CardContent className="p-3">
+            <p className="text-[10px] font-mono text-slate-400 uppercase">
+              Coordination Rate
+            </p>
+            <p className="text-2xl font-bold text-amber-400 font-mono mt-1">
+              {coordinationRate}%
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+      {/* AI Planning Intelligence */}
+      <div className="border border-blue-900/60 bg-blue-950/10 p-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold font-mono uppercase tracking-wider text-blue-300">
+                AI PLANNING INTELLIGENCE
+              </span>
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800">
+                OPTIMIZED
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-400 font-mono mt-1">
+              MULTI-DEPARTMENT COORDINATION • ASSET AVAILABILITY OPTIMIZATION
+            </p>
+          </div>
+
+          <div className="text-[10px] font-mono text-emerald-400">
+            {planningCorridors} CORRIDORS • {planningDepartments} DEPARTMENTS
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
+          <div className="bg-slate-950/70 border border-slate-800 p-2.5">
+            <div className="text-[9px] text-slate-500 font-mono uppercase">
+              AI Recommended
+            </div>
+            <div className="text-lg font-bold text-blue-400 font-mono mt-1">
+              {recommendedBlocks.length}
+            </div>
+            <div className="text-[9px] text-slate-500 font-mono">
+              candidate blocks
+            </div>
+          </div>
+
+          <div className="bg-slate-950/70 border border-slate-800 p-2.5">
+            <div className="text-[9px] text-slate-500 font-mono uppercase">
+              Coordinated
+            </div>
+            <div className="text-lg font-bold text-cyan-400 font-mono mt-1">
+              {coordinatedBlocks.length}
+            </div>
+            <div className="text-[9px] text-slate-500 font-mono">
+              multi-department
+            </div>
+          </div>
+
+          <div className="bg-slate-950/70 border border-slate-800 p-2.5">
+            <div className="text-[9px] text-slate-500 font-mono uppercase">
+              Coordination Rate
+            </div>
+            <div className="text-lg font-bold text-emerald-400 font-mono mt-1">
+              {coordinationRate}%
+            </div>
+            <div className="text-[9px] text-slate-500 font-mono">
+              blocks combined
+            </div>
+          </div>
+
+          <div className="bg-slate-950/70 border border-slate-800 p-2.5">
+            <div className="text-[9px] text-slate-500 font-mono uppercase">
+              Planned Window
+            </div>
+            <div className="text-lg font-bold text-amber-400 font-mono mt-1">
+              {formatDuration(totalPlannedMinutes)}
+            </div>
+            <div className="text-[9px] text-slate-500 font-mono">
+              total block time
+            </div>
+          </div>
+
+          <div className="bg-slate-950/70 border border-slate-800 p-2.5">
+            <div className="text-[9px] text-slate-500 font-mono uppercase">
+              Priority Score
+            </div>
+            <div className="text-lg font-bold text-violet-400 font-mono mt-1">
+              {averagePriorityScore}/100
+            </div>
+            <div className="text-[9px] text-slate-500 font-mono">
+              AI task priority
+            </div>
+          </div>
+        </div>
+      </div>
       {/* Filter Tabs & Corridor Switcher */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-950 border border-slate-800 p-3">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
