@@ -241,15 +241,12 @@ export function Header() {
               </div>
 
               <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
-                {sampleNotifs.map((n) => {
-                  const isRead = readNotifs.includes(n.id);
-                  return (
+                {sampleNotifs
+                  .filter((n) => !readNotifs.includes(n.id))
+                  .map((n) => (
                     <div
                       key={n.id}
-                      className={`p-3 transition-colors ${isRead
-                        ? 'bg-transparent opacity-75'
-                        : 'bg-blue-50/40 dark:bg-blue-950/20'
-                        }`}
+                      className="p-3 transition-colors bg-blue-50/40 dark:bg-blue-950/20"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-1.5">
@@ -273,8 +270,7 @@ export function Header() {
                         {n.desc}
                       </p>
                     </div>
-                  );
-                })}
+                  ))}
               </div>
 
               <div className="p-2 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 text-center">
