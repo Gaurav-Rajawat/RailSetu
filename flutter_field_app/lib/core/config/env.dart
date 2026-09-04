@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 
 class Env {
   // Set to true if running on Android Emulator, false if running on physical device
-  static const bool isEmulator = false;
+  static const bool isEmulator = true;
 
   static String get apiBaseUrl {
     if (kIsWeb) {
