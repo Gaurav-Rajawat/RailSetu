@@ -1,14 +1,29 @@
 import os
-from fastapi import FastAPI
+import time
+import logging
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.api.routes import api_router
 
-from app.api.routes.reports import router as reports_compatibility_router
+logger = logging.getLogger("railsetu.api")
 
-app = FastAPI(title="RailSetu Backend")
+app = FastAPI(
+    title="RailSetu Backend",
+    description="Unified API service for RailSetu Operations Control Center and Field Inspection applications.",
+    version="1.0.0",
+)
 
-# Allow CORS for Flutter Web testing
+# Request execution timing middleware
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    process_time = time.perf_counter() - start_time
+    response.headers["X-Process-Time"] = f"{process_time:.4f}s"
+    return response
+
+# Allow CORS for Flutter Web testing and Admin frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,7 +44,7 @@ def read_root():
     """
     Root endpoint to verify the backend is running.
     """
-    return {"message": "RailSetu Backend Running"}
+    return {"message": "RailSetu Backend Running", "status": "online"}
 
 @app.get("/health")
 def health_check():
@@ -37,4 +52,3 @@ def health_check():
     Health check endpoint to verify the application status.
     """
     return {"status": "healthy"}
-
