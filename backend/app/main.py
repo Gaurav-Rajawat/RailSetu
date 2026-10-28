@@ -2,9 +2,12 @@ import os
 import time
 import logging
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 from app.api.routes import api_router
+from app.database.connection import engine
 
 logger = logging.getLogger("railsetu.api")
 
@@ -52,3 +55,19 @@ def health_check():
     Health check endpoint to verify the application status.
     """
     return {"status": "healthy"}
+
+@app.get("/ready")
+def readiness_check():
+    """
+    Readiness endpoint verifying database connection and operational health.
+    """
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "ready", "database": "connected"}
+    except Exception as exc:
+        logger.error(f"Readiness check failed: {exc}")
+        return JSONResponse(
+            status_code=503,
+            content={"status": "degraded", "database": "disconnected", "error": str(exc)},
+        )
