@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ProblemReport } from '../types/railway';
 import { getFullImageUrl } from '../services/api';
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://192.168.1.9:8000/api/ws/admin';
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://127.0.0.1:8000/api/ws/admin';
 
 export function useAdminWebSocket() {
   const queryClient = useQueryClient();
